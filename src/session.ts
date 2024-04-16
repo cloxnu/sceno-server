@@ -22,7 +22,6 @@ export default async function getSession(locals: Record<string, any>): Promise<S
     if (session.expiry !== undefined) {
         const expiryTimeInterval = Number(session.expiry)
         const now = Math.floor(Date.now() / 1000)
-        console.log(now)
         if (now >= expiryTimeInterval) {
             session = await createSession()
             locals[sessionTokenKey] = session
@@ -34,10 +33,6 @@ export default async function getSession(locals: Record<string, any>): Promise<S
 export async function createSession(): Promise<SessionModel> {
     return await ofetch<SessionModel>("https://tile.googleapis.com/v1/createSession", {
         method: 'POST',
-        headers: {
-            'Access-Control-Allow-Origin': 'true',
-            
-        },
         params: {
             "key": key,
         },
