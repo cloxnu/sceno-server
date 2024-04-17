@@ -39,10 +39,10 @@ export async function verifyAssertion(token: string, req: object): Promise<boole
 
 export async function verifyAssertionMiddleware(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization?.replace('Bearer ', '') ?? ''
-    if (await verifyAssertion(token, req.query)) {
+    if (await verifyAssertion(token, req.body)) {
         next()
     } else {
-        res.status(403)
+        res.status(403).send()
     }
 }
 

@@ -5,12 +5,14 @@ import metadata from './api/metadata';
 import ratelimiter from "./ratelimit";
 import verifyAttest from './api/attest/verify-attest';
 import generateChallenge from './api/attest/generate-challenge';
+import bodyParser from "body-parser";
 
 dotenv.config();
 
 const app = express()
 const port = process.env.PORT;
 
+app.use(bodyParser.json())
 app.use(ratelimiter)
 
 app.get('/', (req, res) => {
@@ -19,8 +21,8 @@ app.get('/', (req, res) => {
 
 app.use('/metadata', metadata)
 
-app.use('/attest', verifyAttest)
-app.use('/attest', generateChallenge)
+app.use('/attest/verify', verifyAttest)
+app.use('/attest/challenge', generateChallenge)
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

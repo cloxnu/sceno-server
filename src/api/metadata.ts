@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express from 'express';
 import getSession from '../session';
 import ErrorModel from '../error';
+import bodyParser from 'body-parser';
 import { ofetch } from 'ofetch';
 import { verifyAssertionMiddleware } from "../verify-assertion";
 const router = express.Router()
@@ -35,27 +36,37 @@ function isCoordinateRequest(obj: any): boolean {
     return 'lat' in obj && 'lng' in obj
 }
 
+function isPanoIDRequest(obj: any): boolean {
+    return 'panoId' in obj
+}
+
 router.use(verifyAssertionMiddleware)
 
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const session = (await getSession(req.app.locals))
         const sessionToken = session.session
-        if (isCoordinateRequest(req.query)) {
-            const coordinateRequest = req.query
+        if (isCoordinateRequest(req.body)) {
+            const coordinateRequest = req.body
             const metadataModel = await ofetch<MetadataModel>(`https://tile.googleapis.com/v1/streetview/metadata?session=${sessionToken}&key=${key}&lat=${coordinateRequest.lat}&lng=${coordinateRequest.lng}&radius=${coordinateRequest.radius ?? 50}`, {
                 method: 'GET',
             })
-            res.json(metadataModel)
+            res.json(metadataModel).send()
+        } else if (isPanoIDRequest(req.body)) {
+            const panoIdRequest = req.body
+            const metadataModel = await ofetch<MetadataModel>(`https://tile.googleapis.com/v1/streetview/metadata?session=${sessionToken}&key=${key}&panoId=${panoIdRequest.panoId}`, {
+                method: 'GET',
+            })
+            res.json(metadataModel).send()
         } else {
-            res.status(400)
+            res.status(400).send()
         }
     } catch(e) {
         console.error(`get metadata failed: ${e}`)
         res.json(<ErrorModel>{
             errorCode: -1,
             errorMessage: "get metadata failed"
-        })
+        }).send()
     }
 })
 

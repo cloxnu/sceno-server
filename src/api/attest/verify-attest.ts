@@ -9,9 +9,9 @@ dotenv.config();
 const bundleId = process.env.BUNDLE_IDENTIFIER
 const teamId = process.env.TEAM_IDENTIFIER
 
-router.post('/verify', async (req, res) => {
+router.post('/', (req, res) => {
     try {
-        let params = req.query
+        let params = req.body
         const model = {
             keyId: params.keyId,
             challenge: params.challenge,
@@ -20,7 +20,7 @@ router.post('/verify', async (req, res) => {
         if (!(typeof model.keyId === 'string' && 
               typeof model.challenge === 'string' && 
               typeof model.attestation === 'string')) {
-            res.status(400)
+            res.status(400).send()
             return
         }
         const result = verifyAttestation({
@@ -31,12 +31,13 @@ router.post('/verify', async (req, res) => {
             teamIdentifier: teamId,
             allowDevelopmentEnvironment: true,
         })
+        console.log(result)
         addAttestation({
             keyId: result.keyId,
             publicKey: result.publicKey,
             signCount: 0,
         })
-        res.status(204)
+        res.status(204).send()
     } catch (error) {
         console.error(`verify attest failed: ${error}`)
         res.status(401).send('Unauthorized')
