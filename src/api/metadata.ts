@@ -3,6 +3,7 @@ import express from 'express';
 import getSession from '../session';
 import ErrorModel from '../error';
 import { ofetch } from 'ofetch';
+import { verifyAssertionMiddleware } from "../verify-assertion";
 const router = express.Router()
 
 dotenv.config()
@@ -30,15 +31,11 @@ interface MetadataLink {
     text?: string
 }
 
-interface MetadataCoordinateRequest {
-    lat: string
-    lng: string
-    radius?: string
-}
-
 function isCoordinateRequest(obj: any): boolean {
     return 'lat' in obj && 'lng' in obj
 }
+
+router.use(verifyAssertionMiddleware)
 
 router.get('/', async (req, res) => {
     try {

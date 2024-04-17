@@ -1,34 +1,29 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
-const express_1 = __importDefault(require("express"));
-const session_1 = __importDefault(require("../session"));
-const ofetch_1 = require("ofetch");
-const router = express_1.default.Router();
-dotenv_1.default.config();
+import dotenv from "dotenv";
+import express from 'express';
+import getSession from '../session';
+import { ofetch } from 'ofetch';
+import { verifyAssertionMiddleware } from "../verify-assertion";
+const router = express.Router();
+dotenv.config();
 const key = process.env.GM_KEY;
-router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+function isCoordinateRequest(obj) {
+    return 'lat' in obj && 'lng' in obj;
+}
+router.use(verifyAssertionMiddleware);
+router.get('/', async (req, res) => {
     try {
-        const session = (yield (0, session_1.default)(req.app.locals)).session;
-        console.log(req.params);
-        const coordinateRequest = req.params;
-        const metadataModel = yield (0, ofetch_1.ofetch)(`https://tile.googleapis.com/v1/streetview/metadata?session=${session}&key=${key}&lat=${coordinateRequest.lat}&lng=${coordinateRequest.lng}&radius=${(_a = coordinateRequest.radius) !== null && _a !== void 0 ? _a : 50}`, {
-            method: 'GET',
-        });
-        res.json(metadataModel);
+        const session = (await getSession(req.app.locals));
+        const sessionToken = session.session;
+        if (isCoordinateRequest(req.query)) {
+            const coordinateRequest = req.query;
+            const metadataModel = await ofetch(`https://tile.googleapis.com/v1/streetview/metadata?session=${sessionToken}&key=${key}&lat=${coordinateRequest.lat}&lng=${coordinateRequest.lng}&radius=${coordinateRequest.radius ?? 50}`, {
+                method: 'GET',
+            });
+            res.json(metadataModel);
+        }
+        else {
+            res.status(400);
+        }
     }
     catch (e) {
         console.error(`get metadata failed: ${e}`);
@@ -37,5 +32,5 @@ router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             errorMessage: "get metadata failed"
         });
     }
-}));
-exports.default = router;
+});
+export default router;
