@@ -9,6 +9,8 @@ dotenv.config();
 const bundleId = process.env.BUNDLE_IDENTIFIER
 const teamId = process.env.TEAM_IDENTIFIER
 
+const debugToken = process.env.DEBUG_TOKEN
+
 export async function verifyAssertion(token: string, req: object): Promise<boolean> {
     try {
         const { keyId, assertion } = JSON.parse(Buffer.from(token, 'base64').toString());
@@ -37,9 +39,13 @@ export async function verifyAssertion(token: string, req: object): Promise<boole
     }
 }
 
+function verifyDebugUUID(token: string): boolean {
+    return token === debugToken
+}
+
 export async function verifyAssertionMiddleware(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization?.replace('Bearer ', '') ?? ''
-    if (await verifyAssertion(token, req.body)) {
+    if (await verifyAssertion(token, req.body) || verifyDebugUUID(token)) {
         next()
     } else {
         res.status(403).send()
